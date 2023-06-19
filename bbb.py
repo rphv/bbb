@@ -31,7 +31,7 @@ def check_weather_at_bridger_bowl(weather_attribute, station, target):
     }
     """
     now = datetime.datetime.now()
-    start_time = (now - datetime.timedelta(hours=0, minutes=20)).strftime('%Y-%m-%d %H:%M:%S')
+    start_time = (now - datetime.timedelta(hours=1, minutes=0)).strftime('%Y-%m-%d %H:%M:%S')
     end_time = now.strftime('%Y-%m-%d %H:%M:%S')
     variables = {
         "station": station,
@@ -54,9 +54,9 @@ def check_weather_at_bridger_bowl(weather_attribute, station, target):
       }
     payload = {"query": query, "variables": variables, "headers": headers}
 
-    logger.info("Getting data...")
-    logger.info("Attribute:  " + weather_attribute)
     logger.info("Station:    " + station)
+    logger.info("Attribute:  " + weather_attribute)
+    logger.info("Target:     " + target)
     logger.info("Start time: " + start_time)
     logger.info("End time:   " + end_time)
 
@@ -65,14 +65,14 @@ def check_weather_at_bridger_bowl(weather_attribute, station, target):
         logger.info("Fetching weather data, attempt " + str(attempt + 1) + " of " + str(max_attempts))
         try:
             response = requests.post(url, json=payload)
-            response.raise_for_status()  # Raises stored HTTPError, if one occurred.
+            response.raise_for_status()  # Raises error for unsuccessful status (i.e., not 2xx).
             weather_data = json.loads(response.text)
             logger.info("Latest weather data: %s", weather_data)
             return weather_data['data']['weather_readings']['data'][0][weather_attribute] > target
         except Exception as e:
             logger.error("Failed to fetch new weather data %s", response)
             if attempt < max_attempts - 1:  # i.e. if it's not the final attempt
-                time.sleep(2**attempt)  # wait for 2 seconds before trying again
+                time.sleep(2**attempt)  # exponential backoff
 
 ### Entry point ###
 
