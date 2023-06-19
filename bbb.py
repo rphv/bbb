@@ -56,7 +56,7 @@ def check_weather_at_bridger_bowl(weather_attribute, station, target):
 
     logger.info("Station:    " + station)
     logger.info("Attribute:  " + weather_attribute)
-    logger.info("Target:     " + target)
+    logger.info("Target:     " + str(target))
     logger.info("Start time: " + start_time)
     logger.info("End time:   " + end_time)
 
