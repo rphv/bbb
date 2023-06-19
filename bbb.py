@@ -114,7 +114,7 @@ else:
                     logger.info("It stopped snowing...")
                     is_new_snow = False
                 led.set_color(name="gray")
-		time.sleep(600)
+                time.sleep(600)
             logger.info("--------------------------------------")
     except KeyboardInterrupt:
         logger.info("Exiting... Bye!")
