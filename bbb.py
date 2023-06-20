@@ -70,14 +70,11 @@ def check_weather_at_bridger_bowl(weather_attribute, station, target):
             logger.info("Latest weather data: %s", weather_data)
             return weather_data['data']['weather_readings']['data'][0][weather_attribute] > target
         except Exception as e:
-            logger.error("Failed to fetch new weather data %s", response)
+            logger.error("Failed to fetch new weather data -- %s", e)
             if attempt < max_attempts - 1:  # i.e. if it's not the final attempt
                 time.sleep(2**attempt)  # exponential backoff
 
 ### Entry point ###
-
-# A hack to wait for the network interface to come up
-time.sleep(30)
 
 # Set up logging
 logger = logging.getLogger("Rotating Log")
@@ -99,22 +96,20 @@ else:
         is_new_snow = False
         
         while (True):
-            if check_weather_at_bridger_bowl('temperature', 'bridger', 48):
+            if check_weather_at_bridger_bowl('temperature', 'bridger', 44):
                 # If previously there was no new snow, then log message
                 # and set BlinkStick to blinking blue
                 if not is_new_snow:
                     logger.info("New snow detected!")
                     is_new_snow = True
-                    # BlinkStick pulse API call lasts for 1 second so this acts
-                    # as delay before next check is performed
                     led.pulse(name="blue", repeats=600)
             else:
                 # If snow found previously, then log message
                 if is_new_snow:
                     logger.info("It stopped snowing...")
                     is_new_snow = False
-                led.set_color(name="gray")
-                time.sleep(600)
+                led.set_color(name="yellow")
+            time.sleep(600)
             logger.info("--------------------------------------")
     except KeyboardInterrupt:
         logger.info("Exiting... Bye!")
