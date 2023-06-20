@@ -96,20 +96,21 @@ else:
         is_new_snow = False
         
         while (True):
-            if check_weather_at_bridger_bowl('temperature', 'bridger', 44):
+            if check_weather_at_bridger_bowl('temperature', 'bridger', 43):
                 # If previously there was no new snow, then log message
                 # and set BlinkStick to blinking blue
                 if not is_new_snow:
                     logger.info("New snow detected!")
                     is_new_snow = True
-                    led.pulse(name="blue", repeats=600)
+                # Each pulse is 2.5s so this blocks for 10 min
+                led.pulse(name="blue", repeats=240)
             else:
                 # If snow found previously, then log message
                 if is_new_snow:
                     logger.info("It stopped snowing...")
                     is_new_snow = False
                 led.set_color(name="yellow")
-            time.sleep(600)
+                time.sleep(600)
             logger.info("--------------------------------------")
     except KeyboardInterrupt:
         logger.info("Exiting... Bye!")
