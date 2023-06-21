@@ -9,6 +9,7 @@ from logging.handlers import RotatingFileHandler
 WEATHER_ATTRIBUTE = 'wind'
 STATION = 'alpine'
 TARGET = 2
+POLL_INTERVAL = 600 # seconds
 URL = 'https://api.bridgerbowl.com/graphql'
 QUERY = """
 query Query($station: String!, $date_start: DateTime!, $date_end: DateTime!) {
@@ -106,14 +107,14 @@ else:
                     logger.info("New snow detected!")
                     is_new_snow = True
                 # Each pulse is approx. 2s so this blocks for about 10 min
-                led.pulse(name="blue", repeats=300)
+                led.pulse(name="blue", repeats=POLL_INTERVAL/2)
             else:
                 # If snow found previously, then log message
                 if is_new_snow:
                     logger.info("It stopped snowing...")
                     is_new_snow = False
                 led.set_color(name="yellow")
-                time.sleep(600)
+                time.sleep(POLL_INTERVAL)
             logger.info("--------------------------------------")
     except KeyboardInterrupt:
         logger.info("Exiting... Bye!")
