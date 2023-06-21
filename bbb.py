@@ -6,30 +6,44 @@ import time
 import logging
 from logging.handlers import RotatingFileHandler
 
+URL = 'https://api.bridgerbowl.com/graphql'
+QUERY = """
+query Query($station: String!, $date_start: DateTime!, $date_end: DateTime!) {
+  weather_readings(
+    station: $station
+    date_range: { from: $date_start, to: $date_end }
+  ) {
+    data {
+      date
+      temperature
+      wind
+      gusts
+      wind_direction
+      humidity
+      pressure
+      new_snow
+      total_snow
+      water_content
+    }
+  }
+}
+"""
+HEADERS = {
+    "accept": "*/*",
+    "accept-language": "en-US,en;q=0.9",
+    "content-type": "application/json",
+    "sec-ch-ua": "\"Google Chrome\";v=\"113\", \"Chromium\";v=\"113\", \"Not-A.Brand\";v=\"24\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "'macOS'",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-site",
+    "sec-gpc": "1",
+    "Referer": "https://bridgerbowl.com/",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
+}
 
 def check_weather_at_bridger_bowl(weather_attribute, station, target):
-    url = 'https://api.bridgerbowl.com/graphql'
-    query = """
-    query Query($station: String!, $date_start: DateTime!, $date_end: DateTime!) {
-      weather_readings(
-        station: $station
-        date_range: { from: $date_start, to: $date_end }
-      ) {
-        data {
-          date
-          temperature
-          wind
-          gusts
-          wind_direction
-          humidity
-          pressure
-          new_snow
-          total_snow
-          water_content
-        }
-      }
-    }
-    """
     now = datetime.datetime.now()
     start_time = (now - datetime.timedelta(hours=1, minutes=0)).strftime('%Y-%m-%d %H:%M:%S')
     end_time = now.strftime('%Y-%m-%d %H:%M:%S')
@@ -38,21 +52,7 @@ def check_weather_at_bridger_bowl(weather_attribute, station, target):
         "date_start": start_time,
         "date_end": end_time
     }
-    headers = {
-        "accept": "*/*",
-        "accept-language": "en-US,en;q=0.9",
-        "content-type": "application/json",
-        "sec-ch-ua": "\"Google Chrome\";v=\"113\", \"Chromium\";v=\"113\", \"Not-A.Brand\";v=\"24\"",
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": "\"macOS\"",
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-site",
-        "sec-gpc": "1",
-        "Referer": "https://bridgerbowl.com/",
-        "Referrer-Policy": "strict-origin-when-cross-origin"
-      }
-    payload = {"query": query, "variables": variables, "headers": headers}
+    payload = {"query": QUERY, "variables": variables, "headers": HEADERS}
 
     logger.info("Station:    " + station)
     logger.info("Attribute:  " + weather_attribute)
@@ -102,8 +102,8 @@ else:
                 if not is_new_snow:
                     logger.info("New snow detected!")
                     is_new_snow = True
-                # Each pulse is 2.5s so this blocks for 10 min
-                led.pulse(name="blue", repeats=240)
+                # Each pulse is approx. 2s so this blocks for about 10 min
+                led.pulse(name="blue", repeats=300)
             else:
                 # If snow found previously, then log message
                 if is_new_snow:
