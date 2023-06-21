@@ -6,7 +6,7 @@ import time
 import logging
 from logging.handlers import RotatingFileHandler
 
-ATTRIBUTE = 'wind'
+WEATHER_ATTRIBUTE = 'wind'
 STATION = 'alpine'
 TARGET = 2
 URL = 'https://api.bridgerbowl.com/graphql'
