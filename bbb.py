@@ -5,6 +5,7 @@ import datetime
 import time
 import logging
 from logging.handlers import RotatingFileHandler
+import traceback
 
 WEATHER_ATTRIBUTE = 'wind'
 STATION = 'alpine'
@@ -108,7 +109,7 @@ try:
                     logger.info("Weather condition met!")
                     is_weather_condition_met = True
                 # Each pulse is approx. 2s so this blocks for about 10 min
-                led.pulse(name="blue", repeats=POLL_INTERVAL/2)
+                led.pulse(name="blue", repeats=POLL_INTERVAL//2)
             else:
                 # If snow found previously, then log message
                 if is_weather_condition_met:
@@ -121,5 +122,8 @@ except KeyboardInterrupt:
     logger.info("Interrupted by user. Exiting... Bye!")
     led.turn_off()
 except Exception as e:
+    error_traceback = traceback.format_exc()  # Capture the full traceback
     logger.error("Exiting with exception: %s", e)
+    logger.error("Full traceback: %s", error_traceback)  # Log the traceback
     led.set_color(name="red")
+
