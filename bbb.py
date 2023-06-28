@@ -70,7 +70,7 @@ def check_weather_at_bridger_bowl():
             response = requests.post(URL, json=payload)
             response.raise_for_status()  # Raises error for unsuccessful status (i.e., not 2xx).
             weather_data = json.loads(response.text)
-            logger.info("Latest weather data: %s", json.dumps(weather_data, indent=4)
+            logger.info("Latest weather data: %s", json.dumps(weather_data, indent=4))
             return (weather_data["data"]["weather_readings"]["data"][0][WEATHER_ATTRIBUTE] > TARGET_WEATHER_ATTRIBUTE_VALUE)
         except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
             logger.error("Failed to fetch new weather data. Exception: %s", e)
