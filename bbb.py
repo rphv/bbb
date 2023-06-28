@@ -7,11 +7,11 @@ import logging
 from logging.handlers import RotatingFileHandler
 import traceback
 
-WEATHER_ATTRIBUTE = 'wind'
-STATION = 'alpine'
-TARGET = 2
-POLL_INTERVAL = 600 # seconds
-URL = 'https://api.bridgerbowl.com/graphql'
+WEATHER_ATTRIBUTE = "wind"
+STATION = "alpine"
+TARGET_WEATHER_ATTRIBUTE_VALUE = 2
+POLL_INTERVAL = 600  # seconds
+URL = "https://api.bridgerbowl.com/graphql"
 MAX_RETRIES = 6
 QUERY = """
 query Query($station: String!, $date_start: DateTime!, $date_end: DateTime!) {
@@ -38,7 +38,7 @@ HEADERS = {
     "accept": "*/*",
     "accept-language": "en-US,en;q=0.9",
     "content-type": "application/json",
-    "sec-ch-ua": "\"Google Chrome\";v=\"113\", \"Chromium\";v=\"113\", \"Not-A.Brand\";v=\"24\"",
+    "sec-ch-ua": '"Google Chrome";v="113", "Chromium";v="113", "Not-A.Brand";v="24"',
     "sec-ch-ua-mobile": "?0",
     "sec-ch-ua-platform": "'macOS'",
     "sec-fetch-dest": "empty",
@@ -46,23 +46,21 @@ HEADERS = {
     "sec-fetch-site": "same-site",
     "sec-gpc": "1",
     "Referer": "https://bridgerbowl.com/",
-    "Referrer-Policy": "strict-origin-when-cross-origin"
+    "Referrer-Policy": "strict-origin-when-cross-origin",
 }
+
 
 def check_weather_at_bridger_bowl():
     now = datetime.datetime.now()
-    start_time = (now - datetime.timedelta(hours=1, minutes=0)).strftime('%Y-%m-%d %H:%M:%S')
-    end_time = now.strftime('%Y-%m-%d %H:%M:%S')
-    variables = {
-        "station": STATION,
-        "date_start": start_time,
-        "date_end": end_time
-    }
+    # start_time is an hour before now
+    start_time = (now - datetime.timedelta(hours=1, minutes=0)).strftime("%Y-%m-%d %H:%M:%S")
+    end_time = now.strftime("%Y-%m-%d %H:%M:%S")
+    variables = {"station": STATION, "date_start": start_time, "date_end": end_time}
     payload = {"query": QUERY, "variables": variables, "headers": HEADERS}
 
     logger.info("Station:    " + STATION)
     logger.info("Attribute:  " + WEATHER_ATTRIBUTE)
-    logger.info("Target:     " + str(TARGET))
+    logger.info("Target:     " + str(TARGET_WEATHER_ATTRIBUTE_VALUE))
     logger.info("Start time: " + start_time)
     logger.info("End time:   " + end_time)
 
@@ -72,52 +70,38 @@ def check_weather_at_bridger_bowl():
             response = requests.post(URL, json=payload)
             response.raise_for_status()  # Raises error for unsuccessful status (i.e., not 2xx).
             weather_data = json.loads(response.text)
-            logger.info("Latest weather data: %s", weather_data)
-            return weather_data['data']['weather_readings']['data'][0][WEATHER_ATTRIBUTE] > TARGET
+            logger.info("Latest weather data: %s", json.dumps(weather_data, indent=4)
+            return (weather_data["data"]["weather_readings"]["data"][0][WEATHER_ATTRIBUTE] > TARGET_WEATHER_ATTRIBUTE_VALUE)
         except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
             logger.error("Failed to fetch new weather data. Exception: %s", e)
             if attempt < MAX_RETRIES - 1:  # i.e. if it's not the final attempt
                 time.sleep(2**attempt)  # exponential backoff
             else:
-                raise # raise the last exception
+                raise  # raise the last exception
 
 
 ### Main ###
 try:
-    # Set up logging
     logger = logging.getLogger("Rotating Log")
     logger.setLevel(logging.DEBUG)
-
-    # add a rotating handler
     handler = RotatingFileHandler("/home/bbb/bbb.log", maxBytes=1000000, backupCount=5)
     logger.addHandler(handler)
 
-    # Find first BlinkStick
     led = blinkstick.find_first()
 
-    # Can't do anything if BlinkStick is not connected
     if led is None:
         logging.error("BlinkStick not found. Exiting.")
     else:
-        # Store value of last state in this variable
-        is_weather_condition_met = False
-        while (True):
+        while True:
             if check_weather_at_bridger_bowl():
-                # If previously there was no new snow, then log message
-                # and set BlinkStick to blinking blue
-                if not is_weather_condition_met:
-                    logger.info("Weather condition met!")
-                    is_weather_condition_met = True
-                # Each pulse is approx. 2s so this blocks for about 10 min
-                led.pulse(name="blue", repeats=POLL_INTERVAL//2)
+                logger.info("Target weather condition met!")
+                # Each pulse is approximately 2s
+                led.pulse(name="blue", repeats=POLL_INTERVAL // 2)
             else:
-                # If snow found previously, then log message
-                if is_weather_condition_met:
-                    logger.info("Weather condition no longer met.")
-                    is_weather_condition_met = False
+                logger.info("Target weather condition not met.")
                 led.set_color(name="white")
                 time.sleep(POLL_INTERVAL)
-                logger.info("--------------------------------------")
+            logger.info("--------------------------------------")
 except KeyboardInterrupt:
     logger.info("Interrupted by user. Exiting... Bye!")
     led.turn_off()
@@ -126,4 +110,3 @@ except Exception as e:
     logger.error("Exiting with exception: %s", e)
     logger.error("Full traceback: %s", error_traceback)  # Log the traceback
     led.set_color(name="red")
-
