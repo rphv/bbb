@@ -16,16 +16,14 @@ from adafruit_is31fl3731.charlie_bonnet import CharlieBonnet as Display
 
 # constants and variables for the LED control
 DELAY = 0.1
-MAX_PIXELS = 16
-falling_pixels = []
 PULSE_LENGTH = 4.0
-MIN_INTENSITY = 1
-MAX_INTENSITY = 33
+MIN_INTENSITY = 0
+MAX_INTENSITY = 32
 
 # constants and variables for the weather checking
-WEATHER_ATTRIBUTE = "wind"
-STATION = "alpine"
-TARGET_WEATHER_ATTRIBUTE_VALUE = 2
+WEATHER_ATTRIBUTE = "new_snow"
+STATION = "bridger"
+TARGET_WEATHER_ATTRIBUTE_VALUE = 0
 POLL_INTERVAL = 600  # seconds
 URL = "https://api.bridgerbowl.com/graphql"
 MAX_RETRIES = 10
@@ -93,7 +91,7 @@ def check_weather_at_bridger_bowl():
             response.raise_for_status()  # raises error for unsuccessful status (i.e., not 2xx).
             weather_data = json.loads(response.text)
             logger.info("Latest weather data: %s", json.dumps(weather_data["data"]["weather_readings"]["data"][0], indent=4))
-            return (weather_data["data"]["weather_readings"]["data"][0][WEATHER_ATTRIBUTE] > TARGET_WEATHER_ATTRIBUTE_VALUE)
+            return weather_data["data"]["weather_readings"]["data"][0][WEATHER_ATTRIBUTE]
         except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
             logger.error("Failed to fetch new weather data. Exception: %s", e)
             if attempt < MAX_RETRIES - 1:  # i.e. if it's not the final attempt
@@ -101,35 +99,37 @@ def check_weather_at_bridger_bowl():
             else:
                 raise  # raise the last exception
 
-
-def draw_pixels():
-    now = datetime.datetime.now()
-    end_time = (now + datetime.timedelta(hours=0, minutes=0, seconds=POLL_INTERVAL))
-
+def draw_pixels(max_pixels):
+    falling_pixels = []
+    end_time = datetime.datetime.now() + datetime.timedelta(seconds=POLL_INTERVAL)
+    start_time = time.time()  # store the start time
     while datetime.datetime.now() < end_time:
-        elapsed_time = time.time() % PULSE_LENGTH  # time elapsed since the start of the current pulse
+        elapsed_time = (time.time() - start_time) % PULSE_LENGTH  # time elapsed since the start of the script
         pulse_progress = elapsed_time / PULSE_LENGTH  # progress of the current pulse as a ratio
-        intensity = int((MAX_INTENSITY - MIN_INTENSITY) * abs(1 - 2 * pulse_progress) + MIN_INTENSITY)   
+        intensity = int((MAX_INTENSITY - MIN_INTENSITY) * abs(2 * pulse_progress - 1) + MIN_INTENSITY)
+
+        # Refresh the display
         display.fill(intensity)
 
-        # if we're below the max pixels, add a new one at a random x-position
-        if len(falling_pixels) < MAX_PIXELS:
+        # If we're below the max pixels, add a new one at a random x-position
+        if len(falling_pixels) < max_pixels:
             falling_pixels.append((random.randint(0, display.width - 1), 0))
 
-        # loop over a copy of the falling pixels list so we can modify it while looping
+        # Loop over a copy of the falling pixels list so we can modify it while looping
         for pixel in falling_pixels.copy():
             x, y = pixel
 
-            # if this pixel has hit the bottom, remove it from the list
+            # If this pixel has hit the bottom, remove it from the list
             if y >= display.height - 1:
                 falling_pixels.remove(pixel)
             else:
-                # otherwise, move the pixel down and draw it
+                # Otherwise, move the pixel down and draw it
                 display.pixel(x, y, 0)  # draw pixel with zero intensity, turning it off
                 y += 1  # move pixel down
                 falling_pixels[falling_pixels.index(pixel)] = (x, y)  # update pixel position in list
 
         interruptible_sleep(DELAY)
+
 
 ### main ###
 try:
@@ -139,9 +139,10 @@ try:
     logger.addHandler(handler)
 
     while True:
-        if check_weather_at_bridger_bowl():
+        weather_attribute_value = check_weather_at_bridger_bowl()
+        if weather_attribute_value > TARGET_WEATHER_ATTRIBUTE_VALUE:
             logger.info("Target weather condition met!")
-            draw_pixels()
+            draw_pixels(weather_attribute_value - TARGET_WEATHER_ATTRIBUTE_VALUE)
         else:
             logger.info("Target weather condition not met.")
             display.fill(0)
