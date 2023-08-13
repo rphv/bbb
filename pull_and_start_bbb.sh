@@ -13,5 +13,5 @@ done
 
 cd "$REPO_DIR" && git pull >> "$LOGFILE" 2>&1
 # Start the Bridger Bowl Blinker
-sudo -u bbb python3 bbb.py &
+python3 bbb.py &
 
