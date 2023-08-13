@@ -36,7 +36,7 @@ def set_weather_constants():
     else:
         WEATHER_ATTRIBUTE = "wind"
         STATION = "midway"
-        TARGET_WEATHER_ATTRIBUTE_VALUE = 4
+        TARGET_WEATHER_ATTRIBUTE_VALUE = 0
 
 # constants and variables for the LED control
 DELAY = 0.1
@@ -189,7 +189,7 @@ try:
         weather_attribute_value = check_weather_at_bridger_bowl()
         if weather_attribute_value > TARGET_WEATHER_ATTRIBUTE_VALUE:
             logger.info("Target weather condition met!")
-            if IS_WINTER:
+            if True:
                 draw_snow_pixels(weather_attribute_value - TARGET_WEATHER_ATTRIBUTE_VALUE)
             else:
                 draw_wind_pixels(weather_attribute_value - TARGET_WEATHER_ATTRIBUTE_VALUE)
