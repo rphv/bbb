@@ -21,13 +21,21 @@ INTERFACE="wlan0"
 HOME_DIR="/home/bbb/"
 LOGFILE="$HOME_DIR/bbb_startup_script.log"
 
+# clean the repo & logfiles
+sudo -u bbb rm -rf "$HOME_DIR/bbb/"
+sudo -u bbb rm -rf "$HOME_DIR/bbb/bbb.log"
+sudo -u bbb rm -rf "$HOME_DIR/bbb/bbb.log1"
+sudo -u bbb rm -rf "$HOME_DIR/bbb/bbb.log2"
+sudo -u bbb rm -rf "$HOME_DIR/bbb/bbb.log3"
+sudo -u bbb rm -rf "$HOME_DIR/bbb/bbb.log4"
+sudo -u bbb rm -rf "$HOME_DIR/bbb/bbb.log5"
+sudo -u bbb rm -rf "$HOME_DIR/bbb/bbb_startup_script.log"
+
 # Wait for the network interface to come up.
 until ping -c 1 github.com; do
     echo "Waiting for network..." >> "$LOGFILE"
     sleep 5
 done
-
-rm -rf "$HOME_DIR/bbb*"
 
 cd "$HOME_DIR" && sudo -u bbb git clone https://github.com/rphv/bbb.git >> "$LOGFILE" 2>&1
 cd bbb/
