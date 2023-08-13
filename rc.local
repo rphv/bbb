@@ -1,0 +1,38 @@
+#!/bin/sh -e
+#
+# rc.local
+#
+# This script is executed at the end of each multiuser runlevel.
+# Make sure that the script will "exit 0" on success or any other
+# value on error.
+#
+# In order to enable or disable this script just change the execution
+# bits.
+#
+# By default this script does nothing.
+
+# Print the IP address
+_IP=$(hostname -I) || true
+if [ "$_IP" ]; then
+  printf "My IP address is %s\n" "$_IP"
+fi
+
+INTERFACE="wlan0"
+HOME_DIR="/home/bbb/"
+LOGFILE="$HOME_DIR/bbb_startup_script.log"
+
+# Wait for the network interface to come up.
+until ping -c 1 github.com; do
+    echo "Waiting for network..." >> "$LOGFILE"
+    sleep 5
+done
+
+rm -rf "$HOME_DIR/bbb*"
+
+cd "$HOME_DIR" && sudo -u bbb git clone https://github.com/rphv/bbb.git >> "$LOGFILE" 2>&1
+cd bbb/
+
+# Start the Bridger Bowl Blinker
+sudo -u bbb python3 bbb.py &
+
+exit 0

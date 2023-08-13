@@ -25,11 +25,8 @@ Replace `your_network_name` and `your_password` with the network SSID and passwo
 
 ## Implementation
 
-The repository includes a bash script `pull_and_start_bbb.sh` that pulls the latest code from this repository and starts the Python script.
-It is designed to be run on boot via an entry in /etc/rc.local, e.g.:
-```
-sudo -u bbb /home/bbb/bbb/pull_and_start_bbb.sh &
-```
+The repository includes a bash script `rc.local` that clones this repository and starts the Python script.
+It is designed to be copied to the /etc directory of the target Raspberry Pi & executed on boot.
 
 On start, Bridger Bowl's graphql endpoint is queried to fetch the current weather conditions at a specific weather station. If the request fails, it will be retried up to MAX_RETRIES with an exponential backoff.
 
