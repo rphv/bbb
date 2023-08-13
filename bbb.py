@@ -189,7 +189,7 @@ try:
         weather_attribute_value = check_weather_at_bridger_bowl()
         if weather_attribute_value > TARGET_WEATHER_ATTRIBUTE_VALUE:
             logger.info("Target weather condition met!")
-            if IS_WINTER:
+            if True:
                 draw_snow_pixels(weather_attribute_value - TARGET_WEATHER_ATTRIBUTE_VALUE)
             else:
                 draw_wind_pixels(weather_attribute_value - TARGET_WEATHER_ATTRIBUTE_VALUE)
