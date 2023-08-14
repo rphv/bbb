@@ -25,7 +25,7 @@ def set_weather_constants():
 
     # Bridger's 2023 season is Dec 8 - Apr 7
     today = datetime.date.today()
-    dec_8 = datetime.date(today.year, 8, 13)
+    dec_8 = datetime.date(today.year, 12, 8)
     apr_7 = datetime.date(today.year + 1, 4, 7)
     IS_WINTER = (dec_8 < today < apr_7)
 
