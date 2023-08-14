@@ -166,7 +166,7 @@ def draw_wind_pixels(max_pixels):
             x, y = pixel
 
             # if this pixel has reached the right edge, remove it from the list
-            if x >= display.width - 1:
+            if x >= display.width:
                 falling_pixels.remove(pixel)
             else:
                 # otherwise, move the pixel right and draw it
