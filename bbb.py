@@ -93,7 +93,7 @@ def check_weather_at_bridger_bowl(weather_station, weather_attribute, target_wea
                 logger.info("No weather data fetched from station: " + weather_station)
                 return NO_DATA
             logger.info("Latest weather data: %s", json.dumps(weather_data["data"]["weather_readings"]["data"][0], indent=4))
-            return weather_data["data"]["weather_readings"]["data"][0][weather_attribute]
+            return math.ceil(weather_data["data"]["weather_readings"]["data"][0][weather_attribute])
         except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
             logger.error("Failed to fetch new weather data. Exception: %s", e)
             if attempt < MAX_RETRIES - 1:  # i.e. if it's not the final attempt
