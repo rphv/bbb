@@ -14,29 +14,6 @@ import traceback
 
 from adafruit_is31fl3731.charlie_bonnet import CharlieBonnet as Display
 
-# global variables & helpers for weather checking
-WEATHER_ATTRIBUTE = None
-STATION = None
-TARGET_WEATHER_ATTRIBUTE_VALUE = None
-IS_WINTER = None
-
-def set_weather_constants():
-    global IS_WINTER, WEATHER_ATTRIBUTE, STATION, TARGET_WEATHER_ATTRIBUTE_VALUE
-
-    # Bridger's 2023 season is Dec 8 - Apr 7
-    today = datetime.date.today()
-    dec_8 = datetime.date(today.year, 12, 8)
-    apr_7 = datetime.date(today.year + 1, 4, 7)
-    IS_WINTER = (dec_8 < today < apr_7)
-
-    if IS_WINTER:
-        WEATHER_ATTRIBUTE = "new_snow"
-        STATION = "bridger"
-        TARGET_WEATHER_ATTRIBUTE_VALUE = 0
-    else:
-        WEATHER_ATTRIBUTE = "wind"
-        STATION = "midway"
-        TARGET_WEATHER_ATTRIBUTE_VALUE = 4
 
 # constants and variables for the LED control
 DELAY = 0.1
@@ -83,6 +60,7 @@ HEADERS = {
     "Referer": "https://bridgerbowl.com/",
     "Referrer-Policy": "strict-origin-when-cross-origin",
 }
+NO_DATA = -1
 
 # setup for the LED display
 i2c = busio.I2C(board.SCL, board.SDA)
@@ -91,17 +69,17 @@ display = Display(i2c)
 def interruptible_sleep(seconds):
     select.select([], [], [], seconds)
 
-def check_weather_at_bridger_bowl():
+def check_weather_at_bridger_bowl(weather_station, weather_attribute, target_weather_attribute_value):
     now = datetime.datetime.now()
     # start_time is an hour before now
     start_time = (now - datetime.timedelta(hours=1, minutes=0)).strftime("%Y-%m-%d %H:%M:%S")
     end_time = now.strftime("%Y-%m-%d %H:%M:%S")
-    variables = {"station": STATION, "date_start": start_time, "date_end": end_time}
+    variables = {"station": weather_station, "date_start": start_time, "date_end": end_time}
     payload = {"query": QUERY, "variables": variables, "headers": HEADERS}
 
-    logger.info("Station:    " + STATION)
-    logger.info("Attribute:  " + WEATHER_ATTRIBUTE)
-    logger.info("Target:     " + str(TARGET_WEATHER_ATTRIBUTE_VALUE))
+    logger.info("Station:    " + weather_station)
+    logger.info("Attribute:  " + weather_attribute)
+    logger.info("Target:     " + str(target_weather_attribute_value))
     logger.info("Start time: " + start_time)
     logger.info("End time:   " + end_time)
 
@@ -111,8 +89,11 @@ def check_weather_at_bridger_bowl():
             response = requests.post(URL, json=payload)
             response.raise_for_status()  # raises error for unsuccessful status (i.e., not 2xx).
             weather_data = json.loads(response.text)
+            if not weather_data["data"]["weather_readings"]["data"]:
+                logger.info("No weather data fetched from station: " + weather_station)
+                return NO_DATA
             logger.info("Latest weather data: %s", json.dumps(weather_data["data"]["weather_readings"]["data"][0], indent=4))
-            return weather_data["data"]["weather_readings"]["data"][0][WEATHER_ATTRIBUTE]
+            return weather_data["data"]["weather_readings"]["data"][0][weather_attribute]
         except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
             logger.error("Failed to fetch new weather data. Exception: %s", e)
             if attempt < MAX_RETRIES - 1:  # i.e. if it's not the final attempt
@@ -185,18 +166,23 @@ try:
     logger.addHandler(handler)
 
     while True:
-        set_weather_constants()
-        weather_attribute_value = check_weather_at_bridger_bowl()
-        if weather_attribute_value > TARGET_WEATHER_ATTRIBUTE_VALUE:
-            logger.info("Target weather condition met!")
-            if IS_WINTER:
-                draw_snow_pixels(weather_attribute_value - TARGET_WEATHER_ATTRIBUTE_VALUE)
-            else:
-                draw_wind_pixels(weather_attribute_value - TARGET_WEATHER_ATTRIBUTE_VALUE)
+        target_new_snow_value = 0
+        current_new_snow = check_weather_at_bridger_bowl("bridger", "new_snow", target_new_snow_value)
+        if current_new_snow > target_new_snow_value:
+            logger.info("It's snowing!")
+            draw_snow_pixels(current_new_snow - target_new_snow_value)
         else:
-            logger.info("Target weather condition not met.")
-            display.fill(0)
-            time.sleep(POLL_INTERVAL)
+            target_wind_value = 4
+            current_wind = check_weather_at_bridger_bowl("midway", "wind", 4)
+            if current_new_snow == NO_DATA and current_wind == NO_DATA:
+                raise Exception("No data fetched from any station!")
+            if current_wind > target_wind_value:
+                logger.info("It's not snowing, but it IS windy.")
+                draw_wind_pixels(current_wind - target_wind_value)
+            else:
+                logger.info("No exciting weather to display.")
+                display.fill(0)
+                time.sleep(POLL_INTERVAL)
         logger.info("--------------------------------------")
 
 except KeyboardInterrupt:
