@@ -24,6 +24,10 @@ network={
 If your network requires a username & password (e.g., for a university wifi network), use the following in wpa_supplicant.conf:
 
 ```
+country=US
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+
 network={
     ssid="your_network_name"
     scan_ssid=1
