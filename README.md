@@ -21,7 +21,22 @@ network={
 }
 ```
 
-Replace `your_network_name` and `your_password` with the network SSID and password of your wifi network.
+If your network requires a username & password (e.g., for a university wifi network), use the following in wpa_supplicant.conf:
+
+```
+network={
+    ssid="your_network_name"
+    scan_ssid=1
+    key_mgmt=WPA-EAP
+    identity="your_username"
+    password="your_password"
+    eap=PEAP
+    phase1="peaplabel=0"
+    phase2="auth=MSCHAPV2"
+}
+```
+
+Replace `your_network_name` and `your_username` / `your_password` with the network SSID and username/password of your wifi network.
 
 ## Implementation
 
