@@ -121,7 +121,7 @@ def draw_snow_pixels(max_pixels):
             x, y = pixel
 
             # if this pixel has hit the bottom, remove it from the list
-            if y >= display.height - 1:
+            if y >= display.height:
                 falling_pixels.remove(pixel)
             else:
                 # otherwise, move the pixel down and draw it
