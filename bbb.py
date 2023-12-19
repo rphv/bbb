@@ -172,7 +172,7 @@ try:
             logger.info("It's snowing!")
             draw_snow_pixels(current_new_snow - target_new_snow_value)
         else:
-            target_wind_value = 4
+            target_wind_value = 0
             current_wind = check_weather_at_bridger_bowl("midway", "wind", 4)
             if current_new_snow == NO_DATA and current_wind == NO_DATA:
                 raise Exception("No data fetched from any station!")
