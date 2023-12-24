@@ -174,13 +174,14 @@ try:
         else:
             target_wind_value = 4
             current_wind = check_weather_at_bridger_bowl("midway", "wind", 4)
-            if current_new_snow == NO_DATA and current_wind == NO_DATA:
-                raise Exception("No data fetched from any station!")
             if current_wind > target_wind_value:
                 logger.info("It's not snowing, but it IS windy.")
                 draw_wind_pixels(current_wind - target_wind_value)
             else:
-                logger.info("No exciting weather to display.")
+                if current_new_snow == NO_DATA and current_wind == NO_DATA:
+                    logger.info("No data fetched from any station!")
+                else:
+                    logger.info("No exciting weather to display.")
                 display.fill(0)
                 time.sleep(POLL_INTERVAL)
         logger.info("--------------------------------------")
