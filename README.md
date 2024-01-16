@@ -1,10 +1,12 @@
 # Bridger Bowl Blinker
 
-A Python script to display "falling snowflakes" on a [Charlieplex LED Bonnet](https://learn.adafruit.com/adafruit-charlieplex-bonnet/overview) when there's new snow at [Bridger Bowl](https://bridgerbowl.com/weather/history-tables) ski area.
+The Bridger Bowl Blinker is a standalone device based built on the [Raspberry Pi Zero W](https://www.raspberrypi.com/products/raspberry-pi-zero-w/) that displays animations on an [LED grid](https://learn.adafruit.com/adafruit-charlieplex-bonnet/overview) when certain weather conditions are met at [Bridger Bowl](https://bridgerbowl.com/weather/history-tables).
+
+If there's new snow at the top of Bridger lift, a pulsing (blinking) animation with falling "snowflake" pixels is displayed. Each falling pixel represents 1 inch (rounded up) of  new snow, e.g. 1 pixel = 1 inch, 2 pixels = 2 inches, etc.
+
+If there's no new snow, but the wind at Midway is > 4 mph, sideways "blowing" pixels are shown. Each pixel represents 1 mph above 4, e.g. 1 pixel = 5 mph, 2 pixels = 6 mph, etc.
 
 ## Usage
-
-This script is designed to be run on a [Raspberry Pi Zero W](https://www.raspberrypi.com/products/raspberry-pi-zero-w/) running Raspbian 11 (Bullseye).
 
 The Pi Zero can be configured for a specific wifi network by writing a file called `wpa_supplicant.conf` with wifi credentials to the root of the Raspberry Pi's bootable SD card.
 
